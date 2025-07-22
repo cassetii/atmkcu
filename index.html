@@ -153,7 +153,13 @@
             <!-- Header -->
             <div class="header-section">
                 <h1><i class="fas fa-university"></i> Manajemen ATM KCU Makassar</h1>
-                <p class="mb-0">Sistem Monitoring AC dan Riwayat ATM</p>
+                <p class="mb-2">Sistem Monitoring AC dan Riwayat ATM</p>
+                <div class="d-flex justify-content-center align-items-center">
+                    <span class="badge bg-success me-2" id="firebaseStatus">
+                        <i class="fas fa-cloud"></i> Terhubung dengan Firebase
+                    </span>
+                    <small class="text-white-50">Data tersinkronisasi secara real-time</small>
+                </div>
             </div>
 
             <!-- Statistics -->
@@ -198,7 +204,10 @@
                         </div>
                     </div>
                     <div class="col-md-4 text-end">
-                        <button class="btn btn-primary btn-custom" data-bs-toggle="modal" data-bs-target="#atmModal">
+                        <button class="btn btn-success btn-custom me-2" onclick="exportToCSV()">
+                            <i class="fas fa-download"></i> Export CSV
+                        </button>
+                        <button class="btn btn-primary btn-custom" onclick="openATMModal()" data-bs-toggle="modal" data-bs-target="#atmModal">
                             <i class="fas fa-plus"></i> Tambah ATM Baru
                         </button>
                     </div>
@@ -397,6 +406,8 @@
 
         // Initialize app
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('App initializing...');
+            
             // Wait for Firebase to be loaded
             setTimeout(() => {
                 loadATMDataFromFirebase();
@@ -407,11 +418,37 @@
             document.getElementById('searchInput').addEventListener('input', function() {
                 filterATMs(this.value);
             });
+
+            // Add event listeners for modals
+            const atmModal = document.getElementById('atmModal');
+            atmModal.addEventListener('hidden.bs.modal', function() {
+                console.log('ATM Modal closed');
+                currentATMId = null;
+            });
+
+            const historyModal = document.getElementById('historyModal');
+            historyModal.addEventListener('hidden.bs.modal', function() {
+                console.log('History Modal closed');
+                currentATMId = null;
+            });
+
+            // Add Enter key support for history input
+            document.getElementById('newHistoryEntry').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    addHistoryEntry();
+                }
+            });
+
+            console.log('App initialization complete');
         });
 
         // Setup real-time listener for ATM data
         function setupRealtimeListener() {
             if (unsubscribe) unsubscribe();
+            
+            // Update Firebase status
+            document.getElementById('firebaseStatus').innerHTML = 
+                '<i class="fas fa-sync fa-spin"></i> Menyinkronkan...';
             
             unsubscribe = window.onSnapshot(window.collection(window.db, "atms"), (snapshot) => {
                 atmData = [];
@@ -423,6 +460,20 @@
                 });
                 renderATMs();
                 updateStatistics();
+                
+                // Update Firebase status
+                document.getElementById('firebaseStatus').innerHTML = 
+                    '<i class="fas fa-cloud-check"></i> Tersinkronisasi dengan Firebase';
+                
+                // Show sync notification (only after initial load)
+                if (atmData.length > 0) {
+                    console.log('Data tersinkronisasi dari Firebase');
+                }
+            }, (error) => {
+                console.error("Error in real-time listener:", error);
+                document.getElementById('firebaseStatus').innerHTML = 
+                    '<i class="fas fa-cloud-exclamation"></i> Error koneksi Firebase';
+                document.getElementById('firebaseStatus').className = 'badge bg-danger me-2';
             });
         }
 
@@ -503,10 +554,26 @@
 
         // Render ATM cards
         function renderATMs(data = atmData) {
+            console.log('Rendering ATMs:', data.length, 'items');
             const atmList = document.getElementById('atmList');
             atmList.innerHTML = '';
 
-            data.forEach(atm => {
+            if (data.length === 0) {
+                atmList.innerHTML = `
+                    <div class="col-12">
+                        <div class="text-center p-5">
+                            <i class="fas fa-university fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Belum ada data ATM</h5>
+                            <p class="text-muted">Klik "Tambah ATM Baru" untuk menambahkan data ATM pertama</p>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            data.forEach((atm, index) => {
+                console.log(`Rendering ATM ${index + 1}:`, atm.name, 'ID:', atm.id);
+                
                 const statusClass = {
                     'aktif': 'success',
                     'maintenance': 'warning',
@@ -525,9 +592,9 @@
                             <div class="atm-header">
                                 <div class="d-flex justify-content-between align-items-start">
                                     <h5 class="mb-1">${atm.name}</h5>
-                                    <span class="badge bg-${statusClass[atm.status]} status-badge">${atm.status.replace('_', ' ').toUpperCase()}</span>
+                                    <span class="badge bg-${statusClass[atm.status] || 'secondary'} status-badge">${(atm.status || 'unknown').replace('_', ' ').toUpperCase()}</span>
                                 </div>
-                                <p class="mb-0"><i class="fas fa-map-marker-alt"></i> ${atm.address.substring(0, 60)}...</p>
+                                <p class="mb-0"><i class="fas fa-map-marker-alt"></i> ${(atm.address || '').substring(0, 60)}...</p>
                             </div>
                             <div class="card-body p-3">
                                 <div class="ac-info">
@@ -545,24 +612,24 @@
                                     <div class="row mt-2">
                                         <div class="col-6">
                                             <small class="text-muted">Status:</small><br>
-                                            <span class="badge bg-${acStatusClass[atm.acStatus]}">${atm.acStatus.replace('_', ' ')}</span>
+                                            <span class="badge bg-${acStatusClass[atm.acStatus] || 'secondary'}">${(atm.acStatus || 'unknown').replace('_', ' ')}</span>
                                         </div>
                                         <div class="col-6">
                                             <small class="text-muted">Suhu:</small><br>
-                                            <strong>${atm.acTemp}°C</strong>
+                                            <strong>${atm.acTemp || 24}°C</strong>
                                         </div>
                                     </div>
                                     ${atm.acNotes ? `<div class="mt-2"><small class="text-muted">Catatan:</small><br><small>${atm.acNotes}</small></div>` : ''}
                                 </div>
                                 
                                 <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                                    <button class="btn btn-outline-primary btn-custom btn-sm" onclick="viewHistory(${atm.id})">
+                                    <button class="btn btn-outline-primary btn-custom btn-sm" onclick="viewHistory('${atm.id}')">
                                         <i class="fas fa-history"></i> Riwayat
                                     </button>
-                                    <button class="btn btn-outline-secondary btn-custom btn-sm" onclick="editATM(${atm.id})">
+                                    <button class="btn btn-outline-secondary btn-custom btn-sm" onclick="editATM('${atm.id}')">
                                         <i class="fas fa-edit"></i> Edit
                                     </button>
-                                    <button class="btn btn-outline-danger btn-custom btn-sm" onclick="deleteATM(${atm.id})">
+                                    <button class="btn btn-outline-danger btn-custom btn-sm" onclick="deleteATM('${atm.id}')">
                                         <i class="fas fa-trash"></i> Hapus
                                     </button>
                                 </div>
@@ -572,6 +639,8 @@
                 `;
                 atmList.innerHTML += card;
             });
+            
+            console.log('ATM rendering complete');
         }
 
         // Update statistics
@@ -632,60 +701,73 @@
             modal.show();
         }
 
-        // Save ATM
-        function saveATM() {
+        // Save ATM to Firebase
+        async function saveATM() {
             const form = document.getElementById('atmForm');
             if (!form.checkValidity()) {
                 form.reportValidity();
                 return;
             }
 
-            const formData = {
-                name: document.getElementById('atmName').value,
-                address: document.getElementById('atmAddress').value,
-                status: document.getElementById('atmStatus').value,
-                acBrand: document.getElementById('acBrand').value,
-                acCapacity: parseFloat(document.getElementById('acCapacity').value) || null,
-                acStatus: document.getElementById('acStatus').value,
-                acTemp: parseInt(document.getElementById('acTemp').value),
-                lastService: document.getElementById('lastService').value,
-                nextService: document.getElementById('nextService').value,
-                acNotes: document.getElementById('acNotes').value
-            };
+            // Show loading
+            const saveBtn = document.querySelector('#atmModal .btn-primary');
+            const originalText = saveBtn.innerHTML;
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+            saveBtn.disabled = true;
 
-            if (currentATMId) {
-                // Update existing ATM
-                const index = atmData.findIndex(a => a.id === currentATMId);
-                if (index !== -1) {
-                    atmData[index] = { ...atmData[index], ...formData };
+            try {
+                const formData = {
+                    name: document.getElementById('atmName').value,
+                    address: document.getElementById('atmAddress').value,
+                    status: document.getElementById('atmStatus').value,
+                    acBrand: document.getElementById('acBrand').value,
+                    acCapacity: parseFloat(document.getElementById('acCapacity').value) || null,
+                    acStatus: document.getElementById('acStatus').value,
+                    acTemp: parseInt(document.getElementById('acTemp').value),
+                    lastService: document.getElementById('lastService').value,
+                    nextService: document.getElementById('nextService').value,
+                    acNotes: document.getElementById('acNotes').value,
+                    updatedAt: new Date().toISOString()
+                };
+
+                if (currentATMId) {
+                    // Update existing ATM
+                    await window.updateDoc(window.doc(window.db, "atms", currentATMId), formData);
                     showToast('success', 'Data ATM berhasil diperbarui');
+                } else {
+                    // Add new ATM
+                    formData.createdAt = new Date().toISOString();
+                    formData.history = [];
+                    await window.addDoc(window.collection(window.db, "atms"), formData);
+                    showToast('success', 'ATM baru berhasil ditambahkan');
                 }
-            } else {
-                // Add new ATM
-                const newId = Math.max(...atmData.map(a => a.id), 0) + 1;
-                atmData.push({
-                    id: newId,
-                    ...formData,
-                    history: []
-                });
-                showToast('success', 'ATM baru berhasil ditambahkan');
-            }
 
-            renderATMs();
-            updateStatistics();
-            
-            // Hide modal
-            const modal = bootstrap.Modal.getInstance(document.getElementById('atmModal'));
-            modal.hide();
+                // Hide modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('atmModal'));
+                modal.hide();
+
+            } catch (error) {
+                console.error("Error saving ATM:", error);
+                showToast('error', 'Gagal menyimpan data ATM');
+            } finally {
+                // Reset button
+                saveBtn.innerHTML = originalText;
+                saveBtn.disabled = false;
+            }
         }
 
-        // Delete ATM
-        function deleteATM(id) {
-            if (confirm('Yakin ingin menghapus ATM ini?')) {
-                atmData = atmData.filter(a => a.id !== id);
-                renderATMs();
-                updateStatistics();
-                showToast('success', 'ATM berhasil dihapus');
+        // Delete ATM from Firebase
+        async function deleteATM(id) {
+            if (!confirm('Yakin ingin menghapus ATM ini? Data akan dihapus permanen dari Firebase.')) {
+                return;
+            }
+
+            try {
+                await window.deleteDoc(window.doc(window.db, "atms", id));
+                showToast('success', 'ATM berhasil dihapus dari Firebase');
+            } catch (error) {
+                console.error("Error deleting ATM:", error);
+                showToast('error', 'Gagal menghapus ATM dari Firebase');
             }
         }
 
@@ -706,15 +788,20 @@
 
         // Render History
         function renderHistory(history) {
+            console.log('Rendering history:', history);
             const historyList = document.getElementById('historyList');
             historyList.innerHTML = '';
 
-            if (history.length === 0) {
+            if (!history || history.length === 0) {
                 historyList.innerHTML = '<p class="text-center text-muted">Belum ada riwayat</p>';
                 return;
             }
 
-            history.reverse().forEach((item, index) => {
+            // Create a copy and reverse to show newest first
+            const sortedHistory = [...history].reverse();
+            
+            sortedHistory.forEach((item, index) => {
+                const originalIndex = history.length - 1 - index;
                 const historyItem = `
                     <div class="history-item">
                         <div class="d-flex justify-content-between align-items-start">
@@ -726,7 +813,7 @@
                                 })}</h6>
                                 <p class="mb-0">${item.entry}</p>
                             </div>
-                            <button class="btn btn-outline-danger btn-sm" onclick="deleteHistoryEntry(${history.length - 1 - index})">
+                            <button class="btn btn-outline-danger btn-sm" onclick="deleteHistoryEntry(${originalIndex})">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
@@ -736,33 +823,117 @@
             });
         }
 
-        // Add History Entry
-        function addHistoryEntry() {
+        // Add History Entry to Firebase
+        async function addHistoryEntry() {
             const entry = document.getElementById('newHistoryEntry').value.trim();
-            if (!entry) return;
+            if (!entry || !currentATMId) return;
 
-            const atm = atmData.find(a => a.id === currentATMId);
-            if (!atm) return;
+            try {
+                const atm = atmData.find(a => a.id === currentATMId);
+                if (!atm) return;
 
-            const newEntry = {
-                date: new Date().toISOString().split('T')[0],
-                entry: entry
-            };
+                const newEntry = {
+                    date: new Date().toISOString().split('T')[0],
+                    entry: entry
+                };
 
-            atm.history.push(newEntry);
-            renderHistory(atm.history);
-            document.getElementById('newHistoryEntry').value = '';
-            showToast('success', 'Riwayat berhasil ditambahkan');
+                const updatedHistory = [...(atm.history || []), newEntry];
+                
+                await window.updateDoc(window.doc(window.db, "atms", currentATMId), {
+                    history: updatedHistory,
+                    updatedAt: new Date().toISOString()
+                });
+
+                document.getElementById('newHistoryEntry').value = '';
+                showToast('success', 'Riwayat berhasil ditambahkan');
+                
+                // Update local data and re-render
+                atm.history = updatedHistory;
+                renderHistory(atm.history);
+
+            } catch (error) {
+                console.error("Error adding history:", error);
+                showToast('error', 'Gagal menambahkan riwayat');
+            }
         }
 
-        // Delete History Entry
-        function deleteHistoryEntry(index) {
-            const atm = atmData.find(a => a.id === currentATMId);
-            if (!atm) return;
+        // Delete History Entry from Firebase
+        async function deleteHistoryEntry(index) {
+            if (!currentATMId) return;
 
-            atm.history.splice(index, 1);
-            renderHistory(atm.history);
-            showToast('success', 'Riwayat berhasil dihapus');
+            try {
+                const atm = atmData.find(a => a.id === currentATMId);
+                if (!atm || !atm.history) return;
+
+                const updatedHistory = [...atm.history];
+                updatedHistory.splice(index, 1);
+
+                await window.updateDoc(window.doc(window.db, "atms", currentATMId), {
+                    history: updatedHistory,
+                    updatedAt: new Date().toISOString()
+                });
+
+                showToast('success', 'Riwayat berhasil dihapus');
+                
+                // Update local data and re-render
+                atm.history = updatedHistory;
+                renderHistory(atm.history);
+
+            } catch (error) {
+                console.error("Error deleting history:", error);
+                showToast('error', 'Gagal menghapus riwayat');
+            }
+        }
+
+        // Export data to CSV
+        function exportToCSV() {
+            if (atmData.length === 0) {
+                showToast('error', 'Tidak ada data untuk diekspor');
+                return;
+            }
+
+            // Prepare CSV data
+            const csvData = atmData.map(atm => ({
+                'Nama ATM': atm.name,
+                'Alamat': atm.address,
+                'Status ATM': atm.status,
+                'Merk AC': atm.acBrand || '',
+                'Kapasitas AC (PK)': atm.acCapacity || '',
+                'Status AC': atm.acStatus,
+                'Suhu Target': atm.acTemp + '°C',
+                'Service Terakhir': atm.lastService || '',
+                'Service Berikutnya': atm.nextService || '',
+                'Catatan AC': atm.acNotes || '',
+                'Jumlah Riwayat': atm.history ? atm.history.length : 0,
+                'Dibuat': new Date(atm.createdAt).toLocaleDateString('id-ID'),
+                'Diupdate': atm.updatedAt ? new Date(atm.updatedAt).toLocaleDateString('id-ID') : ''
+            }));
+
+            // Convert to CSV
+            const headers = Object.keys(csvData[0]);
+            const csvContent = [
+                headers.join(','),
+                ...csvData.map(row => headers.map(header => {
+                    const value = row[header];
+                    // Escape commas and quotes
+                    return typeof value === 'string' && (value.includes(',') || value.includes('"')) 
+                        ? `"${value.replace(/"/g, '""')}"` 
+                        : value;
+                }).join(','))
+            ].join('\n');
+
+            // Download file
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `data-atm-${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            showToast('success', 'Data ATM berhasil diekspor ke CSV');
         }
 
         // Show Toast
