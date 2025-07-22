@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manajemen ATM - Data AC & Riwayat</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #0d6efd;
+            --secondary-color: #6c757d;
+            --success-color: #198754;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .main-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            margin: 20px;
+            padding: 30px;
+        }
+
+        .header-section {
+            background: linear-gradient(45deg, #1e3c72, #2a5298);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .atm-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .atm-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        }
+
+        .atm-header {
+            background: linear-gradient(45deg, #1e3c72, #2a5298);
+            color: white;
+            padding: 20px;
+        }
+
+        .status-badge {
+            font-size: 0.8em;
+            padding: 5px 10px;
+        }
+
+        .ac-info {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .btn-custom {
+            border-radius: 25px;
+            padding: 8px 20px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .modal-header {
+            background: linear-gradient(45deg, #1e3c72, #2a5298);
+            color: white;
+            border-top-left-radius: 15px;
+            border-top-right-radius: 15px;
+        }
+
+        .form-control {
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: #2a5298;
+            box-shadow: 0 0 0 0.2rem rgba(42, 82, 152, 0.25);
+        }
+
+        .history-item {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .search-box {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .stats-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner-border {
+            color: #2a5298;
+        }
+
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1080;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="main-container">
+            <!-- Header -->
+            <div class="header-section">
+                <h1><i class="fas fa-university"></i> Manajemen ATM KCU Makassar</h1>
+                <p class="mb-0">Sistem Monitoring AC dan Riwayat ATM</p>
+            </div>
+
+            <!-- Statistics -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <i class="fas fa-university fa-2x text-primary mb-2"></i>
+                        <h3 id="totalATM">0</h3>
+                        <p>Total ATM</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                        <h3 id="activeATM">0</h3>
+                        <p>ATM Aktif</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <i class="fas fa-snowflake fa-2x text-info mb-2"></i>
+                        <h3 id="acWorking">0</h3>
+                        <p>AC Berfungsi</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <i class="fas fa-exclamation-triangle fa-2x text-warning mb-2"></i>
+                        <h3 id="needMaintenance">0</h3>
+                        <p>Perlu Maintenance</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search and Add Button -->
+            <div class="search-box">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            <input type="text" class="form-control" id="searchInput" placeholder="Cari ATM berdasarkan nama atau alamat...">
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <button class="btn btn-primary btn-custom" data-bs-toggle="modal" data-bs-target="#atmModal">
+                            <i class="fas fa-plus"></i> Tambah ATM Baru
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading -->
+            <div class="loading" id="loading">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Memuat data ATM...</p>
+            </div>
+
+            <!-- ATM List -->
+            <div id="atmList" class="row">
+                <!-- ATM cards will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ATM Modal -->
+    <div class="modal fade" id="atmModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content" style="border-radius: 15px;">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Tambah ATM Baru</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="atmForm">
+                        <input type="hidden" id="atmId">
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Nama ATM</label>
+                                <input type="text" class="form-control" id="atmName" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Status ATM</label>
+                                <select class="form-control" id="atmStatus">
+                                    <option value="aktif">Aktif</option>
+                                    <option value="maintenance">Maintenance</option>
+                                    <option value="tidak_aktif">Tidak Aktif</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Alamat</label>
+                            <textarea class="form-control" id="atmAddress" rows="3" required></textarea>
+                        </div>
+
+                        <h6 class="mt-4 mb-3"><i class="fas fa-snowflake"></i> Data AC</h6>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Merk AC</label>
+                                <input type="text" class="form-control" id="acBrand">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Kapasitas (PK)</label>
+                                <input type="number" class="form-control" id="acCapacity" step="0.5">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Status AC</label>
+                                <select class="form-control" id="acStatus">
+                                    <option value="baik">Baik</option>
+                                    <option value="perlu_service">Perlu Service</option>
+                                    <option value="rusak">Rusak</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Suhu Target (°C)</label>
+                                <input type="number" class="form-control" id="acTemp" min="16" max="30" value="24">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Terakhir Service</label>
+                                <input type="date" class="form-control" id="lastService">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Service Berikutnya</label>
+                                <input type="date" class="form-control" id="nextService">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Catatan AC</label>
+                            <textarea class="form-control" id="acNotes" rows="2"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-primary" onclick="saveATM()">Simpan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- History Modal -->
+    <div class="modal fade" id="historyModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content" style="border-radius: 15px;">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-history"></i> Riwayat ATM</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <input type="text" class="form-control" id="newHistoryEntry" placeholder="Tambahkan catatan riwayat...">
+                        </div>
+                        <div class="col-md-4">
+                            <button class="btn btn-primary w-100" onclick="addHistoryEntry()">
+                                <i class="fas fa-plus"></i> Tambah
+                            </button>
+                        </div>
+                    </div>
+                    <div id="historyList">
+                        <!-- History items will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container">
+        <div id="successToast" class="toast" role="alert">
+            <div class="toast-header bg-success text-white">
+                <i class="fas fa-check-circle me-2"></i>
+                <strong class="me-auto">Berhasil</strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body" id="successMessage"></div>
+        </div>
+        
+        <div id="errorToast" class="toast" role="alert">
+            <div class="toast-header bg-danger text-white">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                <strong class="me-auto">Error</strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body" id="errorMessage"></div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Import Firebase SDK
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCrpljw48aAYyzsbMqUePgFSDOX-klsCAc",
+            authDomain: "atmbanksulselbar.firebaseapp.com",
+            projectId: "atmbanksulselbar",
+            storageBucket: "atmbanksulselbar.firebasestorage.app",
+            messagingSenderId: "261036476120",
+            appId: "1:261036476120:web:a5f1598883d3e4b35c79ad",
+            measurementId: "G-TY0JHTPDQ6"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const db = getFirestore(app);
+
+        // Make Firebase functions globally available
+        window.db = db;
+        window.collection = collection;
+        window.addDoc = addDoc;
+        window.getDocs = getDocs;
+        window.doc = doc;
+        window.updateDoc = updateDoc;
+        window.deleteDoc = deleteDoc;
+        window.onSnapshot = onSnapshot;
+    </script>
+
+    <script>
+        // Data storage - now using Firebase
+        let atmData = [];
+        let currentATMId = null;
+        let unsubscribe = null;
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            // Wait for Firebase to be loaded
+            setTimeout(() => {
+                loadATMDataFromFirebase();
+                setupRealtimeListener();
+            }, 1000);
+            
+            // Search functionality
+            document.getElementById('searchInput').addEventListener('input', function() {
+                filterATMs(this.value);
+            });
+        });
+
+        // Setup real-time listener for ATM data
+        function setupRealtimeListener() {
+            if (unsubscribe) unsubscribe();
+            
+            unsubscribe = window.onSnapshot(window.collection(window.db, "atms"), (snapshot) => {
+                atmData = [];
+                snapshot.forEach((doc) => {
+                    atmData.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+                renderATMs();
+                updateStatistics();
+            });
+        }
+
+        // Load ATM data from Firebase
+        async function loadATMDataFromFirebase() {
+            document.getElementById('loading').style.display = 'block';
+            
+            try {
+                const querySnapshot = await window.getDocs(window.collection(window.db, "atms"));
+                atmData = [];
+                
+                if (querySnapshot.empty) {
+                    // If no data exists, add sample data
+                    await addSampleData();
+                } else {
+                    querySnapshot.forEach((doc) => {
+                        atmData.push({
+                            id: doc.id,
+                            ...doc.data()
+                        });
+                    });
+                }
+                
+                renderATMs();
+                updateStatistics();
+                showToast('success', 'Data ATM berhasil dimuat dari Firebase');
+            } catch (error) {
+                console.error("Error loading ATM data:", error);
+                showToast('error', 'Gagal memuat data ATM dari Firebase');
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        // Add sample data to Firebase
+        async function addSampleData() {
+            const sampleData = [
+                {
+                    name: "ATM Cabang Utama Makassar",
+                    address: "Jl. DR. Ratulangi No. 16, Kel. Mangkura, Kec. Ujung Pandang, Kota Makassar",
+                    status: "aktif",
+                    acBrand: "Daikin",
+                    acCapacity: 2,
+                    acStatus: "baik",
+                    acTemp: 24,
+                    lastService: "2024-12-15",
+                    nextService: "2025-03-15",
+                    acNotes: "AC berfungsi dengan baik",
+                    history: [
+                        { date: "2024-12-15", entry: "Service rutin AC dilakukan" },
+                        { date: "2024-11-20", entry: "Pembersihan filter AC" }
+                    ],
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    name: "ATM Drive Thru KONI Sulsel",
+                    address: "Jl. Sultan Hasanuddin No. 42, Kel. Sawerigading, Kec. Ujung Pandang, Kota Makassar",
+                    status: "aktif",
+                    acBrand: "LG",
+                    acCapacity: 1.5,
+                    acStatus: "perlu_service",
+                    acTemp: 26,
+                    lastService: "2024-10-10",
+                    nextService: "2025-01-10",
+                    acNotes: "AC kurang dingin, perlu pengecekan freon",
+                    history: [
+                        { date: "2024-10-10", entry: "Service AC terakhir" },
+                        { date: "2024-12-20", entry: "Laporan AC kurang dingin dari petugas" }
+                    ],
+                    createdAt: new Date().toISOString()
+                }
+            ];
+
+            for (const atm of sampleData) {
+                await window.addDoc(window.collection(window.db, "atms"), atm);
+            }
+        }
+
+        // Render ATM cards
+        function renderATMs(data = atmData) {
+            const atmList = document.getElementById('atmList');
+            atmList.innerHTML = '';
+
+            data.forEach(atm => {
+                const statusClass = {
+                    'aktif': 'success',
+                    'maintenance': 'warning',
+                    'tidak_aktif': 'danger'
+                };
+
+                const acStatusClass = {
+                    'baik': 'success',
+                    'perlu_service': 'warning',
+                    'rusak': 'danger'
+                };
+
+                const card = `
+                    <div class="col-lg-6 col-xl-4">
+                        <div class="atm-card">
+                            <div class="atm-header">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <h5 class="mb-1">${atm.name}</h5>
+                                    <span class="badge bg-${statusClass[atm.status]} status-badge">${atm.status.replace('_', ' ').toUpperCase()}</span>
+                                </div>
+                                <p class="mb-0"><i class="fas fa-map-marker-alt"></i> ${atm.address.substring(0, 60)}...</p>
+                            </div>
+                            <div class="card-body p-3">
+                                <div class="ac-info">
+                                    <h6><i class="fas fa-snowflake text-info"></i> Informasi AC</h6>
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <small class="text-muted">Merk:</small><br>
+                                            <strong>${atm.acBrand || '-'}</strong>
+                                        </div>
+                                        <div class="col-6">
+                                            <small class="text-muted">Kapasitas:</small><br>
+                                            <strong>${atm.acCapacity || '-'} PK</strong>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-2">
+                                        <div class="col-6">
+                                            <small class="text-muted">Status:</small><br>
+                                            <span class="badge bg-${acStatusClass[atm.acStatus]}">${atm.acStatus.replace('_', ' ')}</span>
+                                        </div>
+                                        <div class="col-6">
+                                            <small class="text-muted">Suhu:</small><br>
+                                            <strong>${atm.acTemp}°C</strong>
+                                        </div>
+                                    </div>
+                                    ${atm.acNotes ? `<div class="mt-2"><small class="text-muted">Catatan:</small><br><small>${atm.acNotes}</small></div>` : ''}
+                                </div>
+                                
+                                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                    <button class="btn btn-outline-primary btn-custom btn-sm" onclick="viewHistory(${atm.id})">
+                                        <i class="fas fa-history"></i> Riwayat
+                                    </button>
+                                    <button class="btn btn-outline-secondary btn-custom btn-sm" onclick="editATM(${atm.id})">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </button>
+                                    <button class="btn btn-outline-danger btn-custom btn-sm" onclick="deleteATM(${atm.id})">
+                                        <i class="fas fa-trash"></i> Hapus
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                atmList.innerHTML += card;
+            });
+        }
+
+        // Update statistics
+        function updateStatistics() {
+            const total = atmData.length;
+            const active = atmData.filter(atm => atm.status === 'aktif').length;
+            const acWorking = atmData.filter(atm => atm.acStatus === 'baik').length;
+            const needMaintenance = atmData.filter(atm => 
+                atm.acStatus === 'perlu_service' || atm.acStatus === 'rusak' || atm.status === 'maintenance'
+            ).length;
+
+            document.getElementById('totalATM').textContent = total;
+            document.getElementById('activeATM').textContent = active;
+            document.getElementById('acWorking').textContent = acWorking;
+            document.getElementById('needMaintenance').textContent = needMaintenance;
+        }
+
+        // Filter ATMs
+        function filterATMs(searchTerm) {
+            const filtered = atmData.filter(atm =>
+                atm.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                atm.address.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+            renderATMs(filtered);
+        }
+
+        // Open ATM modal for adding new ATM
+        function openATMModal() {
+            currentATMId = null;
+            document.getElementById('modalTitle').textContent = 'Tambah ATM Baru';
+            document.getElementById('atmForm').reset();
+            document.getElementById('atmId').value = '';
+        }
+
+        // Edit ATM
+        function editATM(id) {
+            const atm = atmData.find(a => a.id === id);
+            if (!atm) return;
+
+            currentATMId = id;
+            document.getElementById('modalTitle').textContent = 'Edit ATM';
+            
+            // Fill form with ATM data
+            document.getElementById('atmId').value = atm.id;
+            document.getElementById('atmName').value = atm.name;
+            document.getElementById('atmAddress').value = atm.address;
+            document.getElementById('atmStatus').value = atm.status;
+            document.getElementById('acBrand').value = atm.acBrand || '';
+            document.getElementById('acCapacity').value = atm.acCapacity || '';
+            document.getElementById('acStatus').value = atm.acStatus;
+            document.getElementById('acTemp').value = atm.acTemp;
+            document.getElementById('lastService').value = atm.lastService || '';
+            document.getElementById('nextService').value = atm.nextService || '';
+            document.getElementById('acNotes').value = atm.acNotes || '';
+
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('atmModal'));
+            modal.show();
+        }
+
+        // Save ATM
+        function saveATM() {
+            const form = document.getElementById('atmForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const formData = {
+                name: document.getElementById('atmName').value,
+                address: document.getElementById('atmAddress').value,
+                status: document.getElementById('atmStatus').value,
+                acBrand: document.getElementById('acBrand').value,
+                acCapacity: parseFloat(document.getElementById('acCapacity').value) || null,
+                acStatus: document.getElementById('acStatus').value,
+                acTemp: parseInt(document.getElementById('acTemp').value),
+                lastService: document.getElementById('lastService').value,
+                nextService: document.getElementById('nextService').value,
+                acNotes: document.getElementById('acNotes').value
+            };
+
+            if (currentATMId) {
+                // Update existing ATM
+                const index = atmData.findIndex(a => a.id === currentATMId);
+                if (index !== -1) {
+                    atmData[index] = { ...atmData[index], ...formData };
+                    showToast('success', 'Data ATM berhasil diperbarui');
+                }
+            } else {
+                // Add new ATM
+                const newId = Math.max(...atmData.map(a => a.id), 0) + 1;
+                atmData.push({
+                    id: newId,
+                    ...formData,
+                    history: []
+                });
+                showToast('success', 'ATM baru berhasil ditambahkan');
+            }
+
+            renderATMs();
+            updateStatistics();
+            
+            // Hide modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('atmModal'));
+            modal.hide();
+        }
+
+        // Delete ATM
+        function deleteATM(id) {
+            if (confirm('Yakin ingin menghapus ATM ini?')) {
+                atmData = atmData.filter(a => a.id !== id);
+                renderATMs();
+                updateStatistics();
+                showToast('success', 'ATM berhasil dihapus');
+            }
+        }
+
+        // View History
+        function viewHistory(id) {
+            const atm = atmData.find(a => a.id === id);
+            if (!atm) return;
+
+            currentATMId = id;
+            document.querySelector('#historyModal .modal-title').innerHTML = 
+                `<i class="fas fa-history"></i> Riwayat ${atm.name}`;
+            
+            renderHistory(atm.history);
+            
+            const modal = new bootstrap.Modal(document.getElementById('historyModal'));
+            modal.show();
+        }
+
+        // Render History
+        function renderHistory(history) {
+            const historyList = document.getElementById('historyList');
+            historyList.innerHTML = '';
+
+            if (history.length === 0) {
+                historyList.innerHTML = '<p class="text-center text-muted">Belum ada riwayat</p>';
+                return;
+            }
+
+            history.reverse().forEach((item, index) => {
+                const historyItem = `
+                    <div class="history-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">${new Date(item.date).toLocaleDateString('id-ID', {
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric'
+                                })}</h6>
+                                <p class="mb-0">${item.entry}</p>
+                            </div>
+                            <button class="btn btn-outline-danger btn-sm" onclick="deleteHistoryEntry(${history.length - 1 - index})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                historyList.innerHTML += historyItem;
+            });
+        }
+
+        // Add History Entry
+        function addHistoryEntry() {
+            const entry = document.getElementById('newHistoryEntry').value.trim();
+            if (!entry) return;
+
+            const atm = atmData.find(a => a.id === currentATMId);
+            if (!atm) return;
+
+            const newEntry = {
+                date: new Date().toISOString().split('T')[0],
+                entry: entry
+            };
+
+            atm.history.push(newEntry);
+            renderHistory(atm.history);
+            document.getElementById('newHistoryEntry').value = '';
+            showToast('success', 'Riwayat berhasil ditambahkan');
+        }
+
+        // Delete History Entry
+        function deleteHistoryEntry(index) {
+            const atm = atmData.find(a => a.id === currentATMId);
+            if (!atm) return;
+
+            atm.history.splice(index, 1);
+            renderHistory(atm.history);
+            showToast('success', 'Riwayat berhasil dihapus');
+        }
+
+        // Show Toast
+        function showToast(type, message) {
+            const toastId = type === 'success' ? 'successToast' : 'errorToast';
+            const messageId = type === 'success' ? 'successMessage' : 'errorMessage';
+            
+            document.getElementById(messageId).textContent = message;
+            
+            const toast = new bootstrap.Toast(document.getElementById(toastId));
+            toast.show();
+        }
+    </script>
+</body>
+</html>
