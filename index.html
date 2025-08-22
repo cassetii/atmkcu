@@ -3,250 +3,868 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manajemen ATM - Data AC & Riwayat</title>
+    <title>Manajemen ATM - Bank Sulselbar</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
         :root {
-            --primary-color: #0d6efd;
-            --secondary-color: #6c757d;
-            --success-color: #198754;
-            --danger-color: #dc3545;
-            --warning-color: #ffc107;
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --card-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --success-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            --bg-dark: #1a1a2e;
+            --bg-light: #f7f9fc;
+            --card-shadow: 0 15px 35px rgba(50,50,93,.1), 0 5px 15px rgba(0,0,0,.07);
+            --hover-shadow: 0 30px 60px rgba(50,50,93,.2), 0 15px 35px rgba(0,0,0,.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
         body {
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            background: var(--bg-light);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             min-height: 100vh;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            position: relative;
+            overflow-x: hidden;
         }
 
+        body.dark-mode {
+            --bg-light: #1a1a2e;
+            --bg-dark: #0f0f1e;
+            background: var(--bg-dark);
+            color: #e0e0e0;
+        }
+
+        /* Animated Background */
+        .animated-bg {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow: hidden;
+        }
+
+        .animated-bg::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: bgMove 20s linear infinite;
+        }
+
+        @keyframes bgMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        /* Glass Morphism Container */
         .main-container {
             background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            margin: 20px;
-            padding: 30px;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 30px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            margin: 20px auto;
+            max-width: 1400px;
+            padding: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
         }
 
+        body.dark-mode .main-container {
+            background: rgba(26, 26, 46, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Header Section */
         .header-section {
-            background: linear-gradient(45deg, #1e3c72, #2a5298);
+            background: var(--primary-gradient);
             color: white;
-            padding: 25px;
-            border-radius: 15px;
-            margin-bottom: 30px;
-            text-align: center;
+            padding: 35px;
+            border-radius: 25px;
+            margin-bottom: 35px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--card-shadow);
         }
 
+        .header-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        /* Stats Cards */
+        .stats-card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: var(--card-shadow);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--hover-shadow);
+        }
+
+        .stats-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--primary-gradient);
+        }
+
+        .stats-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+
+        .stats-card.primary .stats-icon { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .stats-card.success .stats-icon { background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%); color: white; }
+        .stats-card.info .stats-icon { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: white; }
+        .stats-card.warning .stats-icon { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); color: white; }
+
+        body.dark-mode .stats-card {
+            background: rgba(40, 40, 60, 0.9);
+            color: #e0e0e0;
+        }
+
+        /* ATM Cards - New Design */
         .atm-card {
             background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
+            border-radius: 25px;
             overflow: hidden;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: var(--card-shadow);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            margin-bottom: 30px;
         }
 
         .atm-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: var(--hover-shadow);
         }
 
-        .atm-header {
-            background: linear-gradient(45deg, #1e3c72, #2a5298);
+        .atm-card-header {
+            background: var(--primary-gradient);
+            padding: 25px;
+            position: relative;
             color: white;
-            padding: 20px;
         }
 
-        .status-badge {
-            font-size: 0.8em;
-            padding: 5px 10px;
+        .atm-card-header::after {
+            content: '';
+            position: absolute;
+            bottom: -20px;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background: white;
+            border-radius: 50% 50% 0 0 / 100% 100% 0 0;
         }
 
-        .ac-info {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 15px;
-            margin: 15px 0;
+        body.dark-mode .atm-card {
+            background: rgba(40, 40, 60, 0.9);
         }
 
-        .btn-custom {
-            border-radius: 25px;
-            padding: 8px 20px;
+        body.dark-mode .atm-card-header::after {
+            background: rgba(40, 40, 60, 0.9);
+        }
+
+        .atm-card-body {
+            padding: 25px;
+            padding-top: 35px;
+        }
+
+        .atm-status-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-size: 12px;
             font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        /* AC Info Section */
+        .ac-info-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 20px;
+            padding: 20px;
+            margin: 20px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        body.dark-mode .ac-info-card {
+            background: linear-gradient(135deg, #2a2a4a 0%, #3a3a5a 100%);
+        }
+
+        .ac-info-card::before {
+            content: '❄️';
+            position: absolute;
+            top: -20px;
+            right: -20px;
+            font-size: 80px;
+            opacity: 0.1;
+            transform: rotate(-15deg);
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .info-item {
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(10px);
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        body.dark-mode .info-item {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .info-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2d3436;
+        }
+
+        body.dark-mode .info-value {
+            color: #e0e0e0;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn-action {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-history {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-edit {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .btn-delete {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white;
+        }
+
+        .btn-action:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Search Box */
+        .search-box {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 35px;
+            box-shadow: var(--card-shadow);
+        }
+
+        body.dark-mode .search-box {
+            background: rgba(40, 40, 60, 0.9);
+        }
+
+        .search-input-group {
+            position: relative;
+        }
+
+        .search-input-group input {
+            width: 100%;
+            padding: 15px 20px 15px 50px;
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            font-size: 16px;
             transition: all 0.3s ease;
         }
 
-        .btn-custom:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        .search-input-group input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+            outline: none;
+        }
+
+        .search-input-group .search-icon {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+        }
+
+        /* Modal Styling */
+        .modal-content {
+            border-radius: 25px !important;
+            border: none;
+            overflow: hidden;
         }
 
         .modal-header {
-            background: linear-gradient(45deg, #1e3c72, #2a5298);
+            background: var(--primary-gradient);
             color: white;
-            border-top-left-radius: 15px;
-            border-top-right-radius: 15px;
+            padding: 25px;
+            border: none;
         }
 
-        .form-control {
-            border-radius: 10px;
-            border: 2px solid #e9ecef;
-            transition: border-color 0.3s ease;
+        .modal-body {
+            padding: 30px;
         }
 
-        .form-control:focus {
-            border-color: #2a5298;
-            box-shadow: 0 0 0 0.2rem rgba(42, 82, 152, 0.25);
-        }
-
+        /* History Items */
         .history-item {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 15px 0;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .history-item:hover {
+            transform: translateX(5px);
+            box-shadow: var(--card-shadow);
+        }
+
+        .history-meta {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+
+        .history-date {
             background: white;
+            padding: 8px 15px;
             border-radius: 10px;
-            padding: 15px;
-            margin: 10px 0;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            font-weight: 600;
+            font-size: 14px;
         }
 
-        .search-box {
-            background: white;
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 30px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        .history-technician {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 10px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
 
-        .stats-card {
-            background: white;
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            text-align: center;
+        /* Dark Mode Toggle */
+        .dark-mode-toggle {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: var(--card-shadow);
+            z-index: 1000;
+            transition: all 0.3s ease;
         }
 
-        .loading {
+        .dark-mode-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: var(--hover-shadow);
+        }
+
+        /* Quick Actions FAB */
+        .fab-container {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            z-index: 1000;
+        }
+
+        .fab-main {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: var(--card-shadow);
+            transition: all 0.3s ease;
+        }
+
+        .fab-main:hover {
+            transform: scale(1.1) rotate(90deg);
+        }
+
+        .fab-options {
+            position: absolute;
+            bottom: 70px;
+            left: 0;
             display: none;
-            text-align: center;
-            padding: 20px;
         }
 
-        .spinner-border {
-            color: #2a5298;
+        .fab-options.show {
+            display: block;
         }
 
+        .fab-option {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+            margin-bottom: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            box-shadow: var(--card-shadow);
+            transition: all 0.3s ease;
+            animation: fabSlideIn 0.3s ease;
+        }
+
+        @keyframes fabSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fab-option:hover {
+            background: #667eea;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        /* Chart Container */
+        .chart-container {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: var(--card-shadow);
+        }
+
+        body.dark-mode .chart-container {
+            background: rgba(40, 40, 60, 0.9);
+        }
+
+        /* Loading Animation */
+        .loading-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 50px;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Toast Notifications */
         .toast-container {
             position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1080;
+            top: 30px;
+            right: 30px;
+            z-index: 2000;
+        }
+
+        .custom-toast {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: var(--card-shadow);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            min-width: 300px;
+            animation: slideInRight 0.3s ease;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .toast-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .toast-success .toast-icon {
+            background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+            color: white;
+        }
+
+        .toast-error .toast-icon {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .main-container {
+                margin: 10px;
+                padding: 20px;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .stats-card {
+                margin-bottom: 15px;
+            }
+
+            .dark-mode-toggle {
+                bottom: 20px;
+                right: 20px;
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+            }
+
+            .fab-container {
+                bottom: 20px;
+                left: 20px;
+            }
+
+            .fab-main {
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+
+            body {
+                background: white;
+            }
+
+            .main-container {
+                box-shadow: none;
+                border: 1px solid #ddd;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Animated Background -->
+    <div class="animated-bg"></div>
+
+    <!-- Main Container -->
     <div class="container-fluid">
         <div class="main-container">
-            <!-- Header -->
+            <!-- Header Section -->
             <div class="header-section">
-                <h1><i class="fas fa-university"></i> Manajemen ATM KCU Makassar</h1>
-                <p class="mb-2">Sistem Monitoring AC dan Riwayat ATM</p>
-                <div class="d-flex justify-content-center align-items-center">
-                    <span class="badge bg-success me-2" id="firebaseStatus">
-                        <i class="fas fa-cloud"></i> Terhubung dengan Firebase
-                    </span>
-                    <small class="text-white-50">Data tersinkronisasi secara real-time</small>
-                </div>
-            </div>
-
-            <!-- Statistics -->
-            <div class="row mb-4">
-                <div class="col-md-3">
-                    <div class="stats-card">
-                        <i class="fas fa-university fa-2x text-primary mb-2"></i>
-                        <h3 id="totalATM">0</h3>
-                        <p>Total ATM</p>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="stats-card">
-                        <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
-                        <h3 id="activeATM">0</h3>
-                        <p>ATM Aktif</p>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="stats-card">
-                        <i class="fas fa-snowflake fa-2x text-info mb-2"></i>
-                        <h3 id="acWorking">0</h3>
-                        <p>AC Berfungsi</p>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="stats-card">
-                        <i class="fas fa-exclamation-triangle fa-2x text-warning mb-2"></i>
-                        <h3 id="needMaintenance">0</h3>
-                        <p>Perlu Maintenance</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Search and Add Button -->
-            <div class="search-box">
                 <div class="row align-items-center">
                     <div class="col-md-8">
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-search"></i></span>
-                            <input type="text" class="form-control" id="searchInput" placeholder="Cari ATM berdasarkan nama atau alamat...">
+                        <h1 class="mb-3">
+                            <i class="fas fa-university"></i> 
+                            Sistem Manajemen ATM
+                        </h1>
+                        <p class="mb-0 opacity-90">Bank Sulselbar - KCU Makassar</p>
+                        <div class="mt-3">
+                            <span class="badge bg-white bg-opacity-25 me-2" id="firebaseStatus">
+                                <i class="fas fa-cloud-check"></i> Firebase Connected
+                            </span>
+                            <span class="badge bg-white bg-opacity-25" id="lastUpdate">
+                                <i class="fas fa-clock"></i> Last update: Just now
+                            </span>
                         </div>
                     </div>
                     <div class="col-md-4 text-end">
-                        <button class="btn btn-success btn-custom me-2" onclick="exportToCSV()">
-                            <i class="fas fa-download"></i> Export CSV
-                        </button>
-                        <button class="btn btn-primary btn-custom" onclick="openATMModal()" data-bs-toggle="modal" data-bs-target="#atmModal">
-                            <i class="fas fa-plus"></i> Tambah ATM Baru
-                        </button>
+                        <div class="d-flex gap-2 justify-content-end">
+                            <button class="btn btn-light btn-lg" onclick="showCharts()" title="Analytics">
+                                <i class="fas fa-chart-line"></i>
+                            </button>
+                            <button class="btn btn-light btn-lg" onclick="printReport()" title="Print Report">
+                                <i class="fas fa-print"></i>
+                            </button>
+                            <button class="btn btn-light btn-lg" onclick="exportData()" title="Export">
+                                <i class="fas fa-download"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Loading -->
-            <div class="loading" id="loading">
-                <div class="spinner-border" role="status">
-                    <span class="visually-hidden">Loading...</span>
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-lg-3 col-md-6">
+                    <div class="stats-card primary">
+                        <div class="stats-icon">
+                            <i class="fas fa-university"></i>
+                        </div>
+                        <h2 id="totalATM">0</h2>
+                        <p class="text-muted mb-0">Total ATM</p>
+                        <small class="text-success">
+                            <i class="fas fa-arrow-up"></i> 100% operational
+                        </small>
+                    </div>
                 </div>
-                <p class="mt-2">Memuat data ATM...</p>
+                <div class="col-lg-3 col-md-6">
+                    <div class="stats-card success">
+                        <div class="stats-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <h2 id="activeATM">0</h2>
+                        <p class="text-muted mb-0">ATM Aktif</p>
+                        <small class="text-primary">Real-time status</small>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="stats-card info">
+                        <div class="stats-icon">
+                            <i class="fas fa-snowflake"></i>
+                        </div>
+                        <h2 id="acWorking">0</h2>
+                        <p class="text-muted mb-0">AC Normal</p>
+                        <small class="text-info">Temperature OK</small>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="stats-card warning">
+                        <div class="stats-icon">
+                            <i class="fas fa-tools"></i>
+                        </div>
+                        <h2 id="needMaintenance">0</h2>
+                        <p class="text-muted mb-0">Perlu Service</p>
+                        <small class="text-warning">Schedule pending</small>
+                    </div>
+                </div>
             </div>
 
-            <!-- ATM List -->
+            <!-- Charts Section (Hidden by default) -->
+            <div id="chartsSection" style="display: none;">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="chart-container">
+                            <h5 class="mb-3">Status ATM Overview</h5>
+                            <canvas id="statusChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="chart-container">
+                            <h5 class="mb-3">AC Condition Analysis</h5>
+                            <canvas id="acChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search and Filter Section -->
+            <div class="search-box no-print">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <div class="search-input-group">
+                            <i class="fas fa-search search-icon"></i>
+                            <input type="text" id="searchInput" placeholder="Cari berdasarkan nama ATM, alamat, atau teknisi...">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex gap-2 justify-content-end">
+                            <select class="form-select" id="filterStatus" style="border-radius: 15px; padding: 12px;">
+                                <option value="">Semua Status</option>
+                                <option value="aktif">Aktif</option>
+                                <option value="maintenance">Maintenance</option>
+                                <option value="tidak_aktif">Tidak Aktif</option>
+                            </select>
+                            <select class="form-select" id="filterAC" style="border-radius: 15px; padding: 12px;">
+                                <option value="">Semua AC</option>
+                                <option value="baik">AC Baik</option>
+                                <option value="perlu_service">Perlu Service</option>
+                                <option value="rusak">AC Rusak</option>
+                            </select>
+                            <button class="btn btn-primary" onclick="openATMModal()" style="border-radius: 15px; padding: 12px 25px;">
+                                <i class="fas fa-plus"></i> Tambah ATM
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading State -->
+            <div class="loading-container" id="loading" style="display: none;">
+                <div class="loading-spinner"></div>
+                <p class="mt-3 text-muted">Memuat data ATM...</p>
+            </div>
+
+            <!-- ATM Cards Grid -->
             <div id="atmList" class="row">
-                <!-- ATM cards will be populated here -->
+                <!-- ATM cards will be dynamically populated here -->
             </div>
         </div>
+    </div>
+
+    <!-- Dark Mode Toggle -->
+    <button class="dark-mode-toggle no-print" onclick="toggleDarkMode()">
+        <i class="fas fa-moon" id="darkModeIcon"></i>
+    </button>
+
+    <!-- Quick Actions FAB -->
+    <div class="fab-container no-print">
+        <div class="fab-options" id="fabOptions">
+            <button class="fab-option" onclick="generateQRCodes()" title="Generate QR Codes">
+                <i class="fas fa-qrcode"></i>
+            </button>
+            <button class="fab-option" onclick="scheduleMaintenanceAll()" title="Schedule Maintenance">
+                <i class="fas fa-calendar-check"></i>
+            </button>
+            <button class="fab-option" onclick="sendNotifications()" title="Send Notifications">
+                <i class="fas fa-bell"></i>
+            </button>
+        </div>
+        <button class="fab-main" onclick="toggleFab()">
+            <i class="fas fa-plus"></i>
+        </button>
     </div>
 
     <!-- ATM Modal -->
     <div class="modal fade" id="atmModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
-            <div class="modal-content" style="border-radius: 15px;">
+            <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="modalTitle">Tambah ATM Baru</h5>
+                    <h5 class="modal-title" id="modalTitle">
+                        <i class="fas fa-university"></i> Tambah ATM Baru
+                    </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <form id="atmForm">
                         <input type="hidden" id="atmId">
                         
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Nama ATM</label>
+                        <!-- ATM Information -->
+                        <h6 class="mb-3">
+                            <i class="fas fa-info-circle text-primary"></i> Informasi ATM
+                        </h6>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Nama ATM <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="atmName" required>
                             </div>
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-6">
                                 <label class="form-label">Status ATM</label>
                                 <select class="form-control" id="atmStatus">
                                     <option value="aktif">Aktif</option>
@@ -257,24 +875,24 @@
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Alamat</label>
+                            <label class="form-label">Alamat Lengkap <span class="text-danger">*</span></label>
                             <textarea class="form-control" id="atmAddress" rows="3" required></textarea>
                         </div>
 
-                        <h6 class="mt-4 mb-3"><i class="fas fa-snowflake"></i> Data AC</h6>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
+                        <!-- AC Information -->
+                        <h6 class="mb-3 mt-4">
+                            <i class="fas fa-snowflake text-info"></i> Informasi AC
+                        </h6>
+                        <div class="row mb-3">
+                            <div class="col-md-4">
                                 <label class="form-label">Merk AC</label>
-                                <input type="text" class="form-control" id="acBrand">
+                                <input type="text" class="form-control" id="acBrand" placeholder="Daikin, LG, Panasonic...">
                             </div>
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-4">
                                 <label class="form-label">Kapasitas (PK)</label>
-                                <input type="number" class="form-control" id="acCapacity" step="0.5">
+                                <input type="number" class="form-control" id="acCapacity" step="0.5" min="0.5" max="5">
                             </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-4">
                                 <label class="form-label">Status AC</label>
                                 <select class="form-control" id="acStatus">
                                     <option value="baik">Baik</option>
@@ -282,18 +900,18 @@
                                     <option value="rusak">Rusak</option>
                                 </select>
                             </div>
-                            <div class="col-md-6 mb-3">
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-4">
                                 <label class="form-label">Suhu Target (°C)</label>
                                 <input type="number" class="form-control" id="acTemp" min="16" max="30" value="24">
                             </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-4">
                                 <label class="form-label">Terakhir Service</label>
                                 <input type="date" class="form-control" id="lastService">
                             </div>
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-4">
                                 <label class="form-label">Service Berikutnya</label>
                                 <input type="date" class="form-control" id="nextService">
                             </div>
@@ -301,13 +919,32 @@
 
                         <div class="mb-3">
                             <label class="form-label">Catatan AC</label>
-                            <textarea class="form-control" id="acNotes" rows="2"></textarea>
+                            <textarea class="form-control" id="acNotes" rows="2" placeholder="Catatan kondisi AC, masalah, atau hal penting lainnya..."></textarea>
+                        </div>
+
+                        <!-- Additional Information -->
+                        <h6 class="mb-3 mt-4">
+                            <i class="fas fa-cog text-warning"></i> Informasi Tambahan
+                        </h6>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Teknisi Terakhir</label>
+                                <input type="text" class="form-control" id="lastTechnician" placeholder="Nama teknisi terakhir">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Nomor Kontak Teknisi</label>
+                                <input type="text" class="form-control" id="technicianContact" placeholder="08xx-xxxx-xxxx">
+                            </div>
                         </div>
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                    <button type="button" class="btn btn-primary" onclick="saveATM()">Simpan</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Batal
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="saveATM()">
+                        <i class="fas fa-save"></i> Simpan
+                    </button>
                 </div>
             </div>
         </div>
@@ -316,22 +953,38 @@
     <!-- History Modal -->
     <div class="modal fade" id="historyModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
-            <div class="modal-content" style="border-radius: 15px;">
+            <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="fas fa-history"></i> Riwayat ATM</h5>
+                    <h5 class="modal-title">
+                        <i class="fas fa-history"></i> Riwayat Maintenance
+                    </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="row mb-3">
-                        <div class="col-md-8">
-                            <input type="text" class="form-control" id="newHistoryEntry" placeholder="Tambahkan catatan riwayat...">
-                        </div>
-                        <div class="col-md-4">
-                            <button class="btn btn-primary w-100" onclick="addHistoryEntry()">
-                                <i class="fas fa-plus"></i> Tambah
-                            </button>
+                    <!-- Add History Form -->
+                    <div class="card mb-4" style="border-radius: 15px; border: none; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);">
+                        <div class="card-body">
+                            <h6 class="mb-3">Tambah Riwayat Baru</h6>
+                            <div class="row">
+                                <div class="col-md-5">
+                                    <input type="text" class="form-control" id="technicianName" 
+                                           placeholder="Nama Teknisi" style="border-radius: 10px;">
+                                </div>
+                                <div class="col-md-5">
+                                    <input type="text" class="form-control" id="newHistoryEntry" 
+                                           placeholder="Deskripsi pekerjaan..." style="border-radius: 10px;">
+                                </div>
+                                <div class="col-md-2">
+                                    <button class="btn btn-primary w-100" onclick="addHistoryEntry()" 
+                                            style="border-radius: 10px;">
+                                        <i class="fas fa-plus"></i> Tambah
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
+
+                    <!-- History List -->
                     <div id="historyList">
                         <!-- History items will be populated here -->
                     </div>
@@ -340,25 +993,9 @@
         </div>
     </div>
 
-    <!-- Toast Container -->
-    <div class="toast-container">
-        <div id="successToast" class="toast" role="alert">
-            <div class="toast-header bg-success text-white">
-                <i class="fas fa-check-circle me-2"></i>
-                <strong class="me-auto">Berhasil</strong>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
-            </div>
-            <div class="toast-body" id="successMessage"></div>
-        </div>
-        
-        <div id="errorToast" class="toast" role="alert">
-            <div class="toast-header bg-danger text-white">
-                <i class="fas fa-exclamation-circle me-2"></i>
-                <strong class="me-auto">Error</strong>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
-            </div>
-            <div class="toast-body" id="errorMessage"></div>
-        </div>
+    <!-- Custom Toast Container -->
+    <div class="toast-container" id="toastContainer">
+        <!-- Toasts will be dynamically added here -->
     </div>
 
     <!-- Bootstrap JS -->
@@ -366,12 +1003,10 @@
     
     <!-- Firebase SDK -->
     <script type="module">
-        // Import Firebase SDK
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
 
-        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyCrpljw48aAYyzsbMqUePgFSDOX-klsCAc",
             authDomain: "atmbanksulselbar.firebaseapp.com",
@@ -382,12 +1017,10 @@
             measurementId: "G-TY0JHTPDQ6"
         };
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const analytics = getAnalytics(app);
         const db = getFirestore(app);
 
-        // Make Firebase functions globally available
         window.db = db;
         window.collection = collection;
         window.addDoc = addDoc;
@@ -399,56 +1032,76 @@
     </script>
 
     <script>
-        // Data storage - now using Firebase
+        // Global Variables
         let atmData = [];
         let currentATMId = null;
         let unsubscribe = null;
+        let darkMode = false;
+        let statusChart = null;
+        let acChart = null;
 
-        // Initialize app
+        // Initialize App
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('App initializing...');
+            console.log('Initializing ATM Management System...');
             
-            // Wait for Firebase to be loaded
+            // Check for saved dark mode preference
+            if (localStorage.getItem('darkMode') === 'true') {
+                toggleDarkMode();
+            }
+            
+            // Initialize Firebase after delay
             setTimeout(() => {
                 loadATMDataFromFirebase();
                 setupRealtimeListener();
             }, 1000);
             
+            // Setup event listeners
+            setupEventListeners();
+            
+            // Initialize tooltips
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+
+        // Setup Event Listeners
+        function setupEventListeners() {
             // Search functionality
             document.getElementById('searchInput').addEventListener('input', function() {
-                filterATMs(this.value);
+                filterATMs();
             });
 
-            // Add event listeners for modals
+            // Filter dropdowns
+            document.getElementById('filterStatus').addEventListener('change', filterATMs);
+            document.getElementById('filterAC').addEventListener('change', filterATMs);
+
+            // Modal event listeners
             const atmModal = document.getElementById('atmModal');
             atmModal.addEventListener('hidden.bs.modal', function() {
-                console.log('ATM Modal closed');
                 currentATMId = null;
+                document.getElementById('atmForm').reset();
             });
 
-            const historyModal = document.getElementById('historyModal');
-            historyModal.addEventListener('hidden.bs.modal', function() {
-                console.log('History Modal closed');
-                currentATMId = null;
-            });
-
-            // Add Enter key support for history input
+            // Enter key for history
             document.getElementById('newHistoryEntry').addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
                     addHistoryEntry();
                 }
             });
 
-            console.log('App initialization complete');
-        });
+            document.getElementById('technicianName').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    addHistoryEntry();
+                }
+            });
+        }
 
-        // Setup real-time listener for ATM data
+        // Setup Realtime Listener
         function setupRealtimeListener() {
             if (unsubscribe) unsubscribe();
             
-            // Update Firebase status
-            document.getElementById('firebaseStatus').innerHTML = 
-                '<i class="fas fa-sync fa-spin"></i> Menyinkronkan...';
+            updateConnectionStatus('syncing');
             
             unsubscribe = window.onSnapshot(window.collection(window.db, "atms"), (snapshot) => {
                 atmData = [];
@@ -460,33 +1113,23 @@
                 });
                 renderATMs();
                 updateStatistics();
-                
-                // Update Firebase status
-                document.getElementById('firebaseStatus').innerHTML = 
-                    '<i class="fas fa-cloud-check"></i> Tersinkronisasi dengan Firebase';
-                
-                // Show sync notification (only after initial load)
-                if (atmData.length > 0) {
-                    console.log('Data tersinkronisasi dari Firebase');
-                }
+                updateConnectionStatus('connected');
+                updateLastUpdateTime();
             }, (error) => {
                 console.error("Error in real-time listener:", error);
-                document.getElementById('firebaseStatus').innerHTML = 
-                    '<i class="fas fa-cloud-exclamation"></i> Error koneksi Firebase';
-                document.getElementById('firebaseStatus').className = 'badge bg-danger me-2';
+                updateConnectionStatus('error');
             });
         }
 
-        // Load ATM data from Firebase
+        // Load ATM Data from Firebase
         async function loadATMDataFromFirebase() {
-            document.getElementById('loading').style.display = 'block';
+            document.getElementById('loading').style.display = 'flex';
             
             try {
                 const querySnapshot = await window.getDocs(window.collection(window.db, "atms"));
                 atmData = [];
                 
                 if (querySnapshot.empty) {
-                    // If no data exists, add sample data
                     await addSampleData();
                 } else {
                     querySnapshot.forEach((doc) => {
@@ -499,16 +1142,16 @@
                 
                 renderATMs();
                 updateStatistics();
-                showToast('success', 'Data ATM berhasil dimuat dari Firebase');
+                showCustomToast('success', 'Data ATM berhasil dimuat');
             } catch (error) {
                 console.error("Error loading ATM data:", error);
-                showToast('error', 'Gagal memuat data ATM dari Firebase');
+                showCustomToast('error', 'Gagal memuat data ATM');
             } finally {
                 document.getElementById('loading').style.display = 'none';
             }
         }
 
-        // Add sample data to Firebase
+        // Add Sample Data
         async function addSampleData() {
             const sampleData = [
                 {
@@ -521,10 +1164,20 @@
                     acTemp: 24,
                     lastService: "2024-12-15",
                     nextService: "2025-03-15",
-                    acNotes: "AC berfungsi dengan baik",
+                    acNotes: "AC berfungsi dengan baik, suhu stabil",
+                    lastTechnician: "Budi Santoso",
+                    technicianContact: "0812-3456-7890",
                     history: [
-                        { date: "2024-12-15", entry: "Service rutin AC dilakukan" },
-                        { date: "2024-11-20", entry: "Pembersihan filter AC" }
+                        { 
+                            date: "2024-12-15", 
+                            entry: "Service rutin AC dilakukan",
+                            technician: "Budi Santoso"
+                        },
+                        { 
+                            date: "2024-11-20", 
+                            entry: "Pembersihan filter AC",
+                            technician: "Ahmad Rifai"
+                        }
                     ],
                     createdAt: new Date().toISOString()
                 },
@@ -539,9 +1192,19 @@
                     lastService: "2024-10-10",
                     nextService: "2025-01-10",
                     acNotes: "AC kurang dingin, perlu pengecekan freon",
+                    lastTechnician: "Rizki Pratama",
+                    technicianContact: "0813-9876-5432",
                     history: [
-                        { date: "2024-10-10", entry: "Service AC terakhir" },
-                        { date: "2024-12-20", entry: "Laporan AC kurang dingin dari petugas" }
+                        { 
+                            date: "2024-10-10", 
+                            entry: "Service AC terakhir",
+                            technician: "Rizki Pratama"
+                        },
+                        { 
+                            date: "2024-12-20", 
+                            entry: "Laporan AC kurang dingin dari petugas",
+                            technician: "Security ATM"
+                        }
                     ],
                     createdAt: new Date().toISOString()
                 }
@@ -552,35 +1215,48 @@
             }
         }
 
-        // Render ATM cards
+        // Render ATM Cards
         function renderATMs(data = atmData) {
-            console.log('Rendering ATMs:', data.length, 'items');
             const atmList = document.getElementById('atmList');
             atmList.innerHTML = '';
 
-            if (data.length === 0) {
+            const filteredData = data.filter(atm => {
+                const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+                const statusFilter = document.getElementById('filterStatus').value;
+                const acFilter = document.getElementById('filterAC').value;
+
+                const matchSearch = !searchTerm || 
+                    atm.name.toLowerCase().includes(searchTerm) ||
+                    atm.address.toLowerCase().includes(searchTerm) ||
+                    (atm.lastTechnician && atm.lastTechnician.toLowerCase().includes(searchTerm));
+
+                const matchStatus = !statusFilter || atm.status === statusFilter;
+                const matchAC = !acFilter || atm.acStatus === acFilter;
+
+                return matchSearch && matchStatus && matchAC;
+            });
+
+            if (filteredData.length === 0) {
                 atmList.innerHTML = `
                     <div class="col-12">
                         <div class="text-center p-5">
-                            <i class="fas fa-university fa-3x text-muted mb-3"></i>
-                            <h5 class="text-muted">Belum ada data ATM</h5>
-                            <p class="text-muted">Klik "Tambah ATM Baru" untuk menambahkan data ATM pertama</p>
+                            <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Tidak ada ATM yang ditemukan</h5>
+                            <p class="text-muted">Coba ubah filter pencarian atau tambah ATM baru</p>
                         </div>
                     </div>
                 `;
                 return;
             }
 
-            data.forEach((atm, index) => {
-                console.log(`Rendering ATM ${index + 1}:`, atm.name, 'ID:', atm.id);
-                
-                const statusClass = {
+            filteredData.forEach(atm => {
+                const statusColors = {
                     'aktif': 'success',
                     'maintenance': 'warning',
                     'tidak_aktif': 'danger'
                 };
 
-                const acStatusClass = {
+                const acStatusColors = {
                     'baik': 'success',
                     'perlu_service': 'warning',
                     'rusak': 'danger'
@@ -589,48 +1265,71 @@
                 const card = `
                     <div class="col-lg-6 col-xl-4">
                         <div class="atm-card">
-                            <div class="atm-header">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <h5 class="mb-1">${atm.name}</h5>
-                                    <span class="badge bg-${statusClass[atm.status] || 'secondary'} status-badge">${(atm.status || 'unknown').replace('_', ' ').toUpperCase()}</span>
-                                </div>
-                                <p class="mb-0"><i class="fas fa-map-marker-alt"></i> ${(atm.address || '').substring(0, 60)}...</p>
+                            <div class="atm-card-header">
+                                <span class="atm-status-badge">
+                                    ${atm.status.replace('_', ' ').toUpperCase()}
+                                </span>
+                                <h5 class="mb-2">${atm.name}</h5>
+                                <p class="mb-0 opacity-90">
+                                    <i class="fas fa-map-marker-alt me-2"></i>
+                                    ${atm.address.substring(0, 60)}...
+                                </p>
                             </div>
-                            <div class="card-body p-3">
-                                <div class="ac-info">
-                                    <h6><i class="fas fa-snowflake text-info"></i> Informasi AC</h6>
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <small class="text-muted">Merk:</small><br>
-                                            <strong>${atm.acBrand || '-'}</strong>
+                            <div class="atm-card-body">
+                                <div class="ac-info-card">
+                                    <h6 class="mb-3">
+                                        <i class="fas fa-snowflake me-2"></i>
+                                        AC Information
+                                    </h6>
+                                    <div class="info-grid">
+                                        <div class="info-item">
+                                            <div class="info-label">Brand</div>
+                                            <div class="info-value">${atm.acBrand || 'N/A'}</div>
                                         </div>
-                                        <div class="col-6">
-                                            <small class="text-muted">Kapasitas:</small><br>
-                                            <strong>${atm.acCapacity || '-'} PK</strong>
+                                        <div class="info-item">
+                                            <div class="info-label">Capacity</div>
+                                            <div class="info-value">${atm.acCapacity || 'N/A'} PK</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">Status</div>
+                                            <div class="info-value">
+                                                <span class="badge bg-${acStatusColors[atm.acStatus]}">
+                                                    ${atm.acStatus.replace('_', ' ')}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">Temperature</div>
+                                            <div class="info-value">${atm.acTemp || 24}°C</div>
                                         </div>
                                     </div>
-                                    <div class="row mt-2">
-                                        <div class="col-6">
-                                            <small class="text-muted">Status:</small><br>
-                                            <span class="badge bg-${acStatusClass[atm.acStatus] || 'secondary'}">${(atm.acStatus || 'unknown').replace('_', ' ')}</span>
+                                    ${atm.nextService ? `
+                                        <div class="mt-3 p-2 bg-warning bg-opacity-10 rounded">
+                                            <small class="text-warning">
+                                                <i class="fas fa-clock me-1"></i>
+                                                Next service: ${new Date(atm.nextService).toLocaleDateString('id-ID')}
+                                            </small>
                                         </div>
-                                        <div class="col-6">
-                                            <small class="text-muted">Suhu:</small><br>
-                                            <strong>${atm.acTemp || 24}°C</strong>
+                                    ` : ''}
+                                    ${atm.lastTechnician ? `
+                                        <div class="mt-2">
+                                            <small class="text-muted">
+                                                <i class="fas fa-user-cog me-1"></i>
+                                                Last technician: ${atm.lastTechnician}
+                                            </small>
                                         </div>
-                                    </div>
-                                    ${atm.acNotes ? `<div class="mt-2"><small class="text-muted">Catatan:</small><br><small>${atm.acNotes}</small></div>` : ''}
+                                    ` : ''}
                                 </div>
-                                
-                                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                                    <button class="btn btn-outline-primary btn-custom btn-sm" onclick="viewHistory('${atm.id}')">
-                                        <i class="fas fa-history"></i> Riwayat
+
+                                <div class="action-buttons">
+                                    <button class="btn-action btn-history" onclick="viewHistory('${atm.id}')">
+                                        <i class="fas fa-history"></i> History
                                     </button>
-                                    <button class="btn btn-outline-secondary btn-custom btn-sm" onclick="editATM('${atm.id}')">
+                                    <button class="btn-action btn-edit" onclick="editATM('${atm.id}')">
                                         <i class="fas fa-edit"></i> Edit
                                     </button>
-                                    <button class="btn btn-outline-danger btn-custom btn-sm" onclick="deleteATM('${atm.id}')">
-                                        <i class="fas fa-trash"></i> Hapus
+                                    <button class="btn-action btn-delete" onclick="deleteATM('${atm.id}')">
+                                        <i class="fas fa-trash"></i> Delete
                                     </button>
                                 </div>
                             </div>
@@ -639,40 +1338,59 @@
                 `;
                 atmList.innerHTML += card;
             });
-            
-            console.log('ATM rendering complete');
         }
 
-        // Update statistics
+        // Update Statistics
         function updateStatistics() {
             const total = atmData.length;
             const active = atmData.filter(atm => atm.status === 'aktif').length;
             const acWorking = atmData.filter(atm => atm.acStatus === 'baik').length;
             const needMaintenance = atmData.filter(atm => 
-                atm.acStatus === 'perlu_service' || atm.acStatus === 'rusak' || atm.status === 'maintenance'
+                atm.acStatus === 'perlu_service' || atm.acStatus === 'rusak'
             ).length;
 
-            document.getElementById('totalATM').textContent = total;
-            document.getElementById('activeATM').textContent = active;
-            document.getElementById('acWorking').textContent = acWorking;
-            document.getElementById('needMaintenance').textContent = needMaintenance;
+            // Animate counter updates
+            animateCounter('totalATM', total);
+            animateCounter('activeATM', active);
+            animateCounter('acWorking', acWorking);
+            animateCounter('needMaintenance', needMaintenance);
+
+            // Update charts if visible
+            if (document.getElementById('chartsSection').style.display !== 'none') {
+                updateCharts();
+            }
+        }
+
+        // Animate Counter
+        function animateCounter(id, target) {
+            const element = document.getElementById(id);
+            const current = parseInt(element.textContent);
+            const increment = target > current ? 1 : -1;
+            const step = Math.abs(target - current) / 20;
+            
+            let value = current;
+            const timer = setInterval(() => {
+                value += increment * Math.ceil(step);
+                if ((increment > 0 && value >= target) || (increment < 0 && value <= target)) {
+                    value = target;
+                    clearInterval(timer);
+                }
+                element.textContent = value;
+            }, 50);
         }
 
         // Filter ATMs
-        function filterATMs(searchTerm) {
-            const filtered = atmData.filter(atm =>
-                atm.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                atm.address.toLowerCase().includes(searchTerm.toLowerCase())
-            );
-            renderATMs(filtered);
+        function filterATMs() {
+            renderATMs();
         }
 
-        // Open ATM modal for adding new ATM
+        // Open ATM Modal
         function openATMModal() {
             currentATMId = null;
-            document.getElementById('modalTitle').textContent = 'Tambah ATM Baru';
+            document.getElementById('modalTitle').innerHTML = '<i class="fas fa-university"></i> Tambah ATM Baru';
             document.getElementById('atmForm').reset();
-            document.getElementById('atmId').value = '';
+            const modal = new bootstrap.Modal(document.getElementById('atmModal'));
+            modal.show();
         }
 
         // Edit ATM
@@ -681,9 +1399,9 @@
             if (!atm) return;
 
             currentATMId = id;
-            document.getElementById('modalTitle').textContent = 'Edit ATM';
+            document.getElementById('modalTitle').innerHTML = '<i class="fas fa-edit"></i> Edit ATM';
             
-            // Fill form with ATM data
+            // Fill form
             document.getElementById('atmId').value = atm.id;
             document.getElementById('atmName').value = atm.name;
             document.getElementById('atmAddress').value = atm.address;
@@ -695,13 +1413,14 @@
             document.getElementById('lastService').value = atm.lastService || '';
             document.getElementById('nextService').value = atm.nextService || '';
             document.getElementById('acNotes').value = atm.acNotes || '';
+            document.getElementById('lastTechnician').value = atm.lastTechnician || '';
+            document.getElementById('technicianContact').value = atm.technicianContact || '';
 
-            // Show modal
             const modal = new bootstrap.Modal(document.getElementById('atmModal'));
             modal.show();
         }
 
-        // Save ATM to Firebase
+        // Save ATM
         async function saveATM() {
             const form = document.getElementById('atmForm');
             if (!form.checkValidity()) {
@@ -709,7 +1428,6 @@
                 return;
             }
 
-            // Show loading
             const saveBtn = document.querySelector('#atmModal .btn-primary');
             const originalText = saveBtn.innerHTML;
             saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
@@ -727,47 +1445,49 @@
                     lastService: document.getElementById('lastService').value,
                     nextService: document.getElementById('nextService').value,
                     acNotes: document.getElementById('acNotes').value,
+                    lastTechnician: document.getElementById('lastTechnician').value,
+                    technicianContact: document.getElementById('technicianContact').value,
                     updatedAt: new Date().toISOString()
                 };
 
                 if (currentATMId) {
-                    // Update existing ATM
                     await window.updateDoc(window.doc(window.db, "atms", currentATMId), formData);
-                    showToast('success', 'Data ATM berhasil diperbarui');
+                    showCustomToast('success', 'Data ATM berhasil diperbarui');
                 } else {
-                    // Add new ATM
                     formData.createdAt = new Date().toISOString();
                     formData.history = [];
                     await window.addDoc(window.collection(window.db, "atms"), formData);
-                    showToast('success', 'ATM baru berhasil ditambahkan');
+                    showCustomToast('success', 'ATM baru berhasil ditambahkan');
                 }
 
-                // Hide modal
                 const modal = bootstrap.Modal.getInstance(document.getElementById('atmModal'));
                 modal.hide();
 
             } catch (error) {
                 console.error("Error saving ATM:", error);
-                showToast('error', 'Gagal menyimpan data ATM');
+                showCustomToast('error', 'Gagal menyimpan data ATM');
             } finally {
-                // Reset button
                 saveBtn.innerHTML = originalText;
                 saveBtn.disabled = false;
             }
         }
 
-        // Delete ATM from Firebase
+        // Delete ATM
         async function deleteATM(id) {
-            if (!confirm('Yakin ingin menghapus ATM ini? Data akan dihapus permanen dari Firebase.')) {
-                return;
-            }
+            const result = await showConfirmDialog(
+                'Hapus ATM?',
+                'Data ATM akan dihapus permanen dari database. Tindakan ini tidak dapat dibatalkan.',
+                'danger'
+            );
+
+            if (!result) return;
 
             try {
                 await window.deleteDoc(window.doc(window.db, "atms", id));
-                showToast('success', 'ATM berhasil dihapus dari Firebase');
+                showCustomToast('success', 'ATM berhasil dihapus');
             } catch (error) {
                 console.error("Error deleting ATM:", error);
-                showToast('error', 'Gagal menghapus ATM dari Firebase');
+                showCustomToast('error', 'Gagal menghapus ATM');
             }
         }
 
@@ -788,32 +1508,46 @@
 
         // Render History
         function renderHistory(history) {
-            console.log('Rendering history:', history);
             const historyList = document.getElementById('historyList');
             historyList.innerHTML = '';
 
             if (!history || history.length === 0) {
-                historyList.innerHTML = '<p class="text-center text-muted">Belum ada riwayat</p>';
+                historyList.innerHTML = `
+                    <div class="text-center p-4">
+                        <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">Belum ada riwayat maintenance</p>
+                    </div>
+                `;
                 return;
             }
 
-            // Create a copy and reverse to show newest first
             const sortedHistory = [...history].reverse();
             
             sortedHistory.forEach((item, index) => {
                 const originalIndex = history.length - 1 - index;
                 const historyItem = `
                     <div class="history-item">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <h6 class="mb-1">${new Date(item.date).toLocaleDateString('id-ID', {
+                        <div class="history-meta">
+                            <div class="history-date">
+                                <i class="fas fa-calendar me-2"></i>
+                                ${new Date(item.date).toLocaleDateString('id-ID', {
                                     year: 'numeric',
                                     month: 'long',
                                     day: 'numeric'
-                                })}</h6>
-                                <p class="mb-0">${item.entry}</p>
+                                })}
                             </div>
-                            <button class="btn btn-outline-danger btn-sm" onclick="deleteHistoryEntry(${originalIndex})">
+                            ${item.technician ? `
+                                <div class="history-technician">
+                                    <i class="fas fa-user-cog"></i>
+                                    ${item.technician}
+                                </div>
+                            ` : ''}
+                        </div>
+                        <div class="d-flex justify-content-between align-items-start mt-2">
+                            <p class="mb-0">${item.entry}</p>
+                            <button class="btn btn-sm btn-outline-danger ms-3" 
+                                    onclick="deleteHistoryEntry(${originalIndex})"
+                                    style="border-radius: 8px;">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
@@ -823,10 +1557,20 @@
             });
         }
 
-        // Add History Entry to Firebase
+        // Add History Entry
         async function addHistoryEntry() {
             const entry = document.getElementById('newHistoryEntry').value.trim();
-            if (!entry || !currentATMId) return;
+            const technician = document.getElementById('technicianName').value.trim();
+            
+            if (!entry || !currentATMId) {
+                showCustomToast('warning', 'Silakan isi deskripsi pekerjaan');
+                return;
+            }
+
+            if (!technician) {
+                showCustomToast('warning', 'Silakan isi nama teknisi');
+                return;
+            }
 
             try {
                 const atm = atmData.find(a => a.id === currentATMId);
@@ -834,32 +1578,42 @@
 
                 const newEntry = {
                     date: new Date().toISOString().split('T')[0],
-                    entry: entry
+                    entry: entry,
+                    technician: technician
                 };
 
                 const updatedHistory = [...(atm.history || []), newEntry];
                 
                 await window.updateDoc(window.doc(window.db, "atms", currentATMId), {
                     history: updatedHistory,
+                    lastTechnician: technician,
                     updatedAt: new Date().toISOString()
                 });
 
                 document.getElementById('newHistoryEntry').value = '';
-                showToast('success', 'Riwayat berhasil ditambahkan');
+                document.getElementById('technicianName').value = '';
+                showCustomToast('success', 'Riwayat berhasil ditambahkan');
                 
-                // Update local data and re-render
                 atm.history = updatedHistory;
                 renderHistory(atm.history);
 
             } catch (error) {
                 console.error("Error adding history:", error);
-                showToast('error', 'Gagal menambahkan riwayat');
+                showCustomToast('error', 'Gagal menambahkan riwayat');
             }
         }
 
-        // Delete History Entry from Firebase
+        // Delete History Entry
         async function deleteHistoryEntry(index) {
             if (!currentATMId) return;
+
+            const result = await showConfirmDialog(
+                'Hapus Riwayat?',
+                'Riwayat maintenance akan dihapus permanen.',
+                'warning'
+            );
+
+            if (!result) return;
 
             try {
                 const atm = atmData.find(a => a.id === currentATMId);
@@ -873,26 +1627,162 @@
                     updatedAt: new Date().toISOString()
                 });
 
-                showToast('success', 'Riwayat berhasil dihapus');
+                showCustomToast('success', 'Riwayat berhasil dihapus');
                 
-                // Update local data and re-render
                 atm.history = updatedHistory;
                 renderHistory(atm.history);
 
             } catch (error) {
                 console.error("Error deleting history:", error);
-                showToast('error', 'Gagal menghapus riwayat');
+                showCustomToast('error', 'Gagal menghapus riwayat');
             }
         }
 
-        // Export data to CSV
+        // Toggle Dark Mode
+        function toggleDarkMode() {
+            darkMode = !darkMode;
+            document.body.classList.toggle('dark-mode');
+            const icon = document.getElementById('darkModeIcon');
+            icon.className = darkMode ? 'fas fa-sun' : 'fas fa-moon';
+            localStorage.setItem('darkMode', darkMode);
+        }
+
+        // Toggle FAB Options
+        function toggleFab() {
+            const options = document.getElementById('fabOptions');
+            options.classList.toggle('show');
+        }
+
+        // Show Charts
+        function showCharts() {
+            const chartsSection = document.getElementById('chartsSection');
+            chartsSection.style.display = chartsSection.style.display === 'none' ? 'block' : 'none';
+            
+            if (chartsSection.style.display === 'block') {
+                updateCharts();
+            }
+        }
+
+        // Update Charts
+        function updateCharts() {
+            // Status Chart
+            const statusCtx = document.getElementById('statusChart');
+            if (statusChart) statusChart.destroy();
+            
+            const statusData = {
+                aktif: atmData.filter(a => a.status === 'aktif').length,
+                maintenance: atmData.filter(a => a.status === 'maintenance').length,
+                tidak_aktif: atmData.filter(a => a.status === 'tidak_aktif').length
+            };
+
+            statusChart = new Chart(statusCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Aktif', 'Maintenance', 'Tidak Aktif'],
+                    datasets: [{
+                        data: [statusData.aktif, statusData.maintenance, statusData.tidak_aktif],
+                        backgroundColor: [
+                            'rgba(132, 250, 176, 0.8)',
+                            'rgba(246, 211, 101, 0.8)',
+                            'rgba(255, 107, 107, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgba(132, 250, 176, 1)',
+                            'rgba(246, 211, 101, 1)',
+                            'rgba(255, 107, 107, 1)'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+
+            // AC Chart
+            const acCtx = document.getElementById('acChart');
+            if (acChart) acChart.destroy();
+            
+            const acData = {
+                baik: atmData.filter(a => a.acStatus === 'baik').length,
+                perlu_service: atmData.filter(a => a.acStatus === 'perlu_service').length,
+                rusak: atmData.filter(a => a.acStatus === 'rusak').length
+            };
+
+            acChart = new Chart(acCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Baik', 'Perlu Service', 'Rusak'],
+                    datasets: [{
+                        label: 'Jumlah AC',
+                        data: [acData.baik, acData.perlu_service, acData.rusak],
+                        backgroundColor: [
+                            'rgba(168, 237, 234, 0.8)',
+                            'rgba(246, 211, 101, 0.8)',
+                            'rgba(255, 107, 107, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgba(168, 237, 234, 1)',
+                            'rgba(246, 211, 101, 1)',
+                            'rgba(255, 107, 107, 1)'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+
+        // Export Data
+        function exportData() {
+            const format = prompt('Pilih format export:\n1. CSV\n2. JSON\n3. Excel (XLSX)\n\nMasukkan nomor pilihan (1-3):');
+            
+            if (!format) return;
+
+            switch(format) {
+                case '1':
+                    exportToCSV();
+                    break;
+                case '2':
+                    exportToJSON();
+                    break;
+                case '3':
+                    exportToExcel();
+                    break;
+                default:
+                    showCustomToast('warning', 'Format tidak valid');
+            }
+        }
+
+        // Export to CSV
         function exportToCSV() {
             if (atmData.length === 0) {
-                showToast('error', 'Tidak ada data untuk diekspor');
+                showCustomToast('warning', 'Tidak ada data untuk diekspor');
                 return;
             }
 
-            // Prepare CSV data
             const csvData = atmData.map(atm => ({
                 'Nama ATM': atm.name,
                 'Alamat': atm.address,
@@ -903,48 +1793,190 @@
                 'Suhu Target': atm.acTemp + '°C',
                 'Service Terakhir': atm.lastService || '',
                 'Service Berikutnya': atm.nextService || '',
+                'Teknisi Terakhir': atm.lastTechnician || '',
+                'Kontak Teknisi': atm.technicianContact || '',
                 'Catatan AC': atm.acNotes || '',
-                'Jumlah Riwayat': atm.history ? atm.history.length : 0,
-                'Dibuat': new Date(atm.createdAt).toLocaleDateString('id-ID'),
-                'Diupdate': atm.updatedAt ? new Date(atm.updatedAt).toLocaleDateString('id-ID') : ''
+                'Jumlah Riwayat': atm.history ? atm.history.length : 0
             }));
 
-            // Convert to CSV
             const headers = Object.keys(csvData[0]);
             const csvContent = [
                 headers.join(','),
                 ...csvData.map(row => headers.map(header => {
                     const value = row[header];
-                    // Escape commas and quotes
                     return typeof value === 'string' && (value.includes(',') || value.includes('"')) 
                         ? `"${value.replace(/"/g, '""')}"` 
                         : value;
                 }).join(','))
             ].join('\n');
 
-            // Download file
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            downloadFile(csvContent, `atm-data-${getCurrentDate()}.csv`, 'text/csv');
+            showCustomToast('success', 'Data berhasil diekspor ke CSV');
+        }
+
+        // Export to JSON
+        function exportToJSON() {
+            if (atmData.length === 0) {
+                showCustomToast('warning', 'Tidak ada data untuk diekspor');
+                return;
+            }
+
+            const jsonContent = JSON.stringify(atmData, null, 2);
+            downloadFile(jsonContent, `atm-data-${getCurrentDate()}.json`, 'application/json');
+            showCustomToast('success', 'Data berhasil diekspor ke JSON');
+        }
+
+        // Export to Excel (Basic HTML Table)
+        function exportToExcel() {
+            if (atmData.length === 0) {
+                showCustomToast('warning', 'Tidak ada data untuk diekspor');
+                return;
+            }
+
+            let html = '<html><head><meta charset="utf-8"></head><body>';
+            html += '<table border="1">';
+            html += '<tr><th>Nama ATM</th><th>Alamat</th><th>Status</th><th>Merk AC</th>';
+            html += '<th>Kapasitas</th><th>Status AC</th><th>Suhu</th><th>Teknisi Terakhir</th></tr>';
+            
+            atmData.forEach(atm => {
+                html += '<tr>';
+                html += `<td>${atm.name}</td>`;
+                html += `<td>${atm.address}</td>`;
+                html += `<td>${atm.status}</td>`;
+                html += `<td>${atm.acBrand || ''}</td>`;
+                html += `<td>${atm.acCapacity || ''}</td>`;
+                html += `<td>${atm.acStatus}</td>`;
+                html += `<td>${atm.acTemp}°C</td>`;
+                html += `<td>${atm.lastTechnician || ''}</td>`;
+                html += '</tr>';
+            });
+            
+            html += '</table></body></html>';
+            
+            downloadFile(html, `atm-data-${getCurrentDate()}.xls`, 'application/vnd.ms-excel');
+            showCustomToast('success', 'Data berhasil diekspor ke Excel');
+        }
+
+        // Download File Helper
+        function downloadFile(content, filename, type) {
+            const blob = new Blob([content], { type: type + ';charset=utf-8;' });
             const link = document.createElement('a');
             const url = URL.createObjectURL(blob);
             link.setAttribute('href', url);
-            link.setAttribute('download', `data-atm-${new Date().toISOString().split('T')[0]}.csv`);
+            link.setAttribute('download', filename);
             link.style.visibility = 'hidden';
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-
-            showToast('success', 'Data ATM berhasil diekspor ke CSV');
         }
 
-        // Show Toast
-        function showToast(type, message) {
-            const toastId = type === 'success' ? 'successToast' : 'errorToast';
-            const messageId = type === 'success' ? 'successMessage' : 'errorMessage';
+        // Print Report
+        function printReport() {
+            window.print();
+            showCustomToast('info', 'Silakan pilih printer untuk mencetak laporan');
+        }
+
+        // Generate QR Codes
+        function generateQRCodes() {
+            showCustomToast('info', 'Fitur QR Code sedang dalam pengembangan');
+        }
+
+        // Schedule Maintenance All
+        function scheduleMaintenanceAll() {
+            showCustomToast('info', 'Fitur penjadwalan maintenance sedang dalam pengembangan');
+        }
+
+        // Send Notifications
+        function sendNotifications() {
+            showCustomToast('info', 'Fitur notifikasi sedang dalam pengembangan');
+        }
+
+        // Show Custom Toast
+        function showCustomToast(type, message) {
+            const toastContainer = document.getElementById('toastContainer');
+            const toastId = 'toast-' + Date.now();
             
-            document.getElementById(messageId).textContent = message;
-            
-            const toast = new bootstrap.Toast(document.getElementById(toastId));
-            toast.show();
+            const iconMap = {
+                'success': 'fa-check-circle',
+                'error': 'fa-exclamation-circle',
+                'warning': 'fa-exclamation-triangle',
+                'info': 'fa-info-circle'
+            };
+
+            const toast = document.createElement('div');
+            toast.className = `custom-toast toast-${type}`;
+            toast.id = toastId;
+            toast.innerHTML = `
+                <div class="toast-icon">
+                    <i class="fas ${iconMap[type]}"></i>
+                </div>
+                <div class="toast-content">
+                    <strong>${type.charAt(0).toUpperCase() + type.slice(1)}</strong>
+                    <p class="mb-0">${message}</p>
+                </div>
+            `;
+
+            toastContainer.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'slideInRight 0.3s ease reverse';
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, 3000);
+        }
+
+        // Show Confirm Dialog
+        function showConfirmDialog(title, message, type = 'warning') {
+            return new Promise((resolve) => {
+                const result = confirm(`${title}\n\n${message}`);
+                resolve(result);
+            });
+        }
+
+        // Update Connection Status
+        function updateConnectionStatus(status) {
+            const statusElement = document.getElementById('firebaseStatus');
+            const statusMap = {
+                'syncing': {
+                    icon: 'fa-sync fa-spin',
+                    text: 'Syncing...',
+                    class: 'bg-warning'
+                },
+                'connected': {
+                    icon: 'fa-cloud-check',
+                    text: 'Firebase Connected',
+                    class: 'bg-success'
+                },
+                'error': {
+                    icon: 'fa-cloud-exclamation',
+                    text: 'Connection Error',
+                    class: 'bg-danger'
+                }
+            };
+
+            const config = statusMap[status];
+            statusElement.innerHTML = `<i class="fas ${config.icon}"></i> ${config.text}`;
+            statusElement.className = `badge ${config.class} bg-opacity-25 me-2`;
+        }
+
+        // Update Last Update Time
+        function updateLastUpdateTime() {
+            const element = document.getElementById('lastUpdate');
+            element.innerHTML = `<i class="fas fa-clock"></i> Last update: ${getCurrentTime()}`;
+        }
+
+        // Get Current Date
+        function getCurrentDate() {
+            return new Date().toISOString().split('T')[0];
+        }
+
+        // Get Current Time
+        function getCurrentTime() {
+            return new Date().toLocaleTimeString('id-ID', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
         }
     </script>
 </body>
